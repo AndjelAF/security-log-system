@@ -1,61 +1,74 @@
-from db_config import events_collection
+from pymongo import MongoClient
+from datetime import datetime, timedelta, timezone
 from collections import Counter
-from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+import pandas as pd
 
-# ---- 1. Funkcija za filtriranje logova ----
-def filter_logs(logs, user=None, event_type=None, start_time=None, end_time=None):
-    """
-    Filtrira listu logova po korisniku, tipu događaja i vremenskom opsegu.
-    """
+# --- Konfiguracija konekcije ---
+client = MongoClient("mongodb://localhost:27017/")
+db = client["security_logs"]  # ime baze
+collection = db["events"]     # ime kolekcije
+
+# --- Filter logova po vremenu ---
+def filter_logs(logs, start_time=None, end_time=None):
     filtered = []
     for log in logs:
         ts = log["timestamp"]
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
         if start_time and ts < start_time:
             continue
         if end_time and ts > end_time:
             continue
-        if user and log["user"] != user:
-            continue
-        if event_type and log["type"] != event_type:
-            continue
         filtered.append(log)
     return filtered
 
-# ---- 2. Učitaj sve logove iz baze ----
-all_logs = list(events_collection.find())
+# --- Učitavanje logova ---
+all_logs = list(collection.find())
 
-# ---- 3. Primer: filtriranje logova poslednjih 24h ----
-now = datetime.utcnow()           # offset-naive
+# --- Definisanje vremenskog perioda (poslednjih 24h) ---
+now = datetime.now(timezone.utc)
 yesterday = now - timedelta(days=1)
 recent_logs = filter_logs(all_logs, start_time=yesterday, end_time=now)
 
-# ---- 4. Statistika ----
-type_count = Counter([log["type"] for log in recent_logs])
-user_count = Counter([log["user"] for log in recent_logs])
-hour_count = Counter([log["timestamp"].hour for log in recent_logs])
+# --- Statistika po tipu ---
+type_counts = Counter([log["type"] for log in recent_logs])
+print("Broj događaja po tipu:")
+for typ, count in type_counts.items():
+    print(f"{typ}: {count}")
 
-# ---- 5. Filter primer: failed logins po korisniku "ana" ----
-failed_ana = filter_logs(recent_logs, user="ana", event_type="failed_login")
-print(f"\nBroj failed_login događaja za korisnika 'ana': {len(failed_ana)}")
+# --- Statistika po korisniku ---
+user_counts = Counter([log["user"] for log in recent_logs])
+print("\nBroj događaja po korisniku:")
+for user, count in user_counts.items():
+    print(f"{user}: {count}")
 
-# ---- 6. Objedinjena vizualizacija ----
-fig, axes = plt.subplots(1, 3, figsize=(18, 5))  # 1 red, 3 kolone
+# --- Statistika po satu (UTC) ---
+hour_counts = Counter([log["timestamp"].hour for log in recent_logs])
+print("\nBroj događaja po satu (UTC):")
+for hour, count in sorted(hour_counts.items()):
+    print(f"{hour:02d}:00 - {count} događaja")
 
-# Tip događaja
-axes[0].bar(type_count.keys(), type_count.values(), color='skyblue')
-axes[0].set_title("Broj događaja po tipu")
-axes[0].set_ylabel("Broj događaja")
+# --- Alert za sumnjive aktivnosti ---
+FAILED_LOGIN_THRESHOLD = 3
+failed_counts = Counter([log["user"] for log in recent_logs if log["type"] == "failed_login"])
 
-# Korisnici
-axes[1].bar(user_count.keys(), user_count.values(), color='salmon')
-axes[1].set_title("Broj događaja po korisniku")
+print("\n--- Detekcija sumnjivih aktivnosti ---")
+for user, count in failed_counts.items():
+    if count >= FAILED_LOGIN_THRESHOLD:
+        print(f"ALERT: {user} ima {count} failed login pokušaja u poslednjih 24h!")
 
-# Po satu
-axes[2].bar([str(h)+":00" for h in sorted(hour_count.keys())],
-            [hour_count[h] for h in sorted(hour_count.keys())],
-            color='lightgreen')
-axes[2].set_title("Broj događaja po satu (UTC)")
+# --- Pivot tabela po korisniku i tipu događaja ---
+df = pd.DataFrame(recent_logs)
+pivot = pd.pivot_table(df, index='user', columns='type', aggfunc='size', fill_value=0)
 
-plt.tight_layout()  # da se subplot-ovi ne preklapaju
+print("\nPivot tabela (broj događaja po tipu i korisniku):")
+print(pivot)
+
+# --- Vizualizacija objedinjena ---
+pivot.plot(kind='bar', stacked=True, figsize=(10,6), colormap='Set2')
+plt.title("Događaji po korisniku i tipu (poslednjih 24h)")
+plt.ylabel("Broj događaja")
+plt.xlabel("Korisnik")
+plt.tight_layout()
 plt.show()
