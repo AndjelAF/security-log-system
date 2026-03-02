@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Log Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 40px; }
+        table { border-collapse: collapse; margin-bottom: 30px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        .alert { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>Security Monitoring Dashboard</h1>
+
+<h2>Događaji po tipu (poslednjih 24h)</h2>
+<table id="typesTable">
+    <tr><th>Tip</th><th>Broj</th></tr>
+</table>
+
+<h2>Brute Force - Username</h2>
+<div id="userAlerts"></div>
+
+<h2>Brute Force - IP</h2>
+<div id="ipAlerts"></div>
+
+<script>
+async function loadTypes() {
+    const response = await fetch("/api/stats/types");
+    const data = await response.json();
+
+    const table = document.getElementById("typesTable");
+
+    data.forEach(item => {
+        const row = table.insertRow();
+        row.insertCell(0).innerText = item._id;
+        row.insertCell(1).innerText = item.count;
+    });
+}
+
+async function loadUserAlerts() {
+    const response = await fetch("/api/alerts/users");
+    const data = await response.json();
+
+    const container = document.getElementById("userAlerts");
+
+    data.forEach(alert => {
+        const p = document.createElement("p");
+        p.className = "alert";
+        p.innerText = `ALERT: ${alert._id} ima ${alert.count} failed login pokušaja!`;
+        container.appendChild(p);
+    });
+}
+
+async function loadIpAlerts() {
+    const response = await fetch("/api/alerts/ip");
+    const data = await response.json();
+
+    const container = document.getElementById("ipAlerts");
+
+    data.forEach(alert => {
+        const p = document.createElement("p");
+        p.className = "alert";
+        p.innerText = `ALERT: IP ${alert._id} ima ${alert.count} failed login pokušaja!`;
+        container.appendChild(p);
+    });
+}
+
+loadTypes();
+loadUserAlerts();
+loadIpAlerts();
+</script>
+
+</body>
+</html>
