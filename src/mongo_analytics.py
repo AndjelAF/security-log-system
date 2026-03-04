@@ -8,7 +8,7 @@ def get_time_range():
     return yesterday, now
 
 
-# 📊 Događaji po tipu
+# Događaji po tipu
 def events_by_type():
     start, end = get_time_range()
 
@@ -30,7 +30,7 @@ def events_by_type():
     return list(events_collection.aggregate(pipeline))
 
 
-# 👤 Brute force po username-u
+# Brute force po username-u
 def brute_force_by_user(threshold=3):
     start, end = get_time_range()
 
@@ -57,7 +57,7 @@ def brute_force_by_user(threshold=3):
     return list(events_collection.aggregate(pipeline))
 
 
-# 🌐 Brute force po IP adresi
+# Brute force po IP adresi
 def brute_force_by_ip(threshold=3):
     start, end = get_time_range()
 
