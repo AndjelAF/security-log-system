@@ -6,9 +6,9 @@ from db_config import events_collection
 users = ["andjela", "marko", "ana", "petar"]
 event_types = ["login_attempt", "failed_login", "logout"]
 
-# Broj logova koje želimo generisati
 num_logs = 50
 
+#  Normalni random logovi
 for _ in range(num_logs):
     log = {
         "timestamp": datetime.now(timezone.utc),
@@ -17,6 +17,23 @@ for _ in range(num_logs):
         "success": random.choice([True, False]),
         "ip": f"192.168.{random.randint(0,255)}.{random.randint(1,254)}"
     }
+
     events_collection.insert_one(log)
 
-print(f"{num_logs} logova ubačeno u kolekciju 'events'.")
+
+# Simulacija brute force napada sa jedne IP
+attack_ip = "192.168.100.50"
+
+for _ in range(6):   # više od threshold (3)
+    log = {
+        "timestamp": datetime.now(timezone.utc),
+        "user": random.choice(users),
+        "type": "failed_login",
+        "success": False,
+        "ip": attack_ip
+    }
+
+    events_collection.insert_one(log)
+
+
+print(f"{num_logs} normalnih logova + brute force događaji ubačeni u kolekciju.")
