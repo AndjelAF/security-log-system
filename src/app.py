@@ -1,5 +1,11 @@
 from flask import Flask, jsonify, render_template
-from mongo_analytics import events_by_type, brute_force_by_user, brute_force_by_ip
+from mongo_analytics import (
+    events_by_type,
+    brute_force_by_user,
+    brute_force_by_ip,
+    attack_burst_detection,
+    events_trend
+)
 
 app = Flask(__name__, template_folder="templates")
 
@@ -18,6 +24,15 @@ def api_user_alerts():
 @app.route("/api/alerts/ip")
 def api_ip_alerts():
     return jsonify(brute_force_by_ip())
+
+@app.route("/api/alerts/burst")
+def api_burst_alerts():
+    return jsonify(attack_burst_detection())
+
+
+@app.route("/api/stats/trend")
+def api_trend():
+    return jsonify(events_trend())
 
 
 # Frontend ruta

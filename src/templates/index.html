@@ -15,7 +15,10 @@
 
 <h2>Događaji po tipu (poslednjih 24h)</h2>
 <table id="typesTable">
-    <tr><th>Tip</th><th>Broj</th></tr>
+    <tr>
+        <th>Tip</th>
+        <th>Broj</th>
+    </tr>
 </table>
 
 <h2>Brute Force - Username</h2>
@@ -24,7 +27,19 @@
 <h2>Brute Force - IP</h2>
 <div id="ipAlerts"></div>
 
+<h2>Attack Burst Detection</h2>
+<div id="burstAlerts"></div>
+
+<h2>Activity Trend</h2>
+<table id="trendTable">
+    <tr>
+        <th>Time Window</th>
+        <th>Events</th>
+    </tr>
+</table>
+
 <script>
+
 async function loadTypes() {
     const response = await fetch("/api/stats/types");
     const data = await response.json();
@@ -33,10 +48,12 @@ async function loadTypes() {
 
     data.forEach(item => {
         const row = table.insertRow();
+
         row.insertCell(0).innerText = item._id;
         row.insertCell(1).innerText = item.count;
     });
 }
+
 
 async function loadUserAlerts() {
     const response = await fetch("/api/alerts/users");
@@ -46,11 +63,15 @@ async function loadUserAlerts() {
 
     data.forEach(alert => {
         const p = document.createElement("p");
+
         p.className = "alert";
-        p.innerText = `ALERT: ${alert._id} ima ${alert.count} failed login pokušaja!`;
+        p.innerText =
+            `ALERT: ${alert._id} ima ${alert.count} failed login pokušaja!`;
+
         container.appendChild(p);
     });
 }
+
 
 async function loadIpAlerts() {
     const response = await fetch("/api/alerts/ip");
@@ -60,15 +81,58 @@ async function loadIpAlerts() {
 
     data.forEach(alert => {
         const p = document.createElement("p");
+
         p.className = "alert";
-        p.innerText = `ALERT: IP ${alert._id} ima ${alert.count} failed login pokušaja!`;
+        p.innerText =
+            `ALERT: IP ${alert._id} ima ${alert.count} failed login pokušaja!`;
+
         container.appendChild(p);
     });
 }
 
+
+async function loadBurstAlerts() {
+    const response = await fetch("/api/alerts/burst");
+    const data = await response.json();
+
+    const container = document.getElementById("burstAlerts");
+
+    data.forEach(alert => {
+        const p = document.createElement("p");
+
+        p.className = "alert";
+        p.innerText =
+            `ATTACK BURST: ${alert.count} failed login pokušaja detektovano u kratkom vremenskom intervalu!`;
+
+        container.appendChild(p);
+    });
+}
+
+
+async function loadTrend() {
+    const response = await fetch("/api/stats/trend");
+    const data = await response.json();
+
+    const table = document.getElementById("trendTable");
+
+    data.forEach(item => {
+        const row = table.insertRow();
+
+        row.insertCell(0).innerText =
+            new Date(item._id).toLocaleTimeString();
+
+        row.insertCell(1).innerText =
+            item.count;
+    });
+}
+
+
 loadTypes();
 loadUserAlerts();
 loadIpAlerts();
+loadBurstAlerts();
+loadTrend();
+
 </script>
 
 </body>

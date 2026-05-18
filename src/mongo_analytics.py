@@ -82,3 +82,73 @@ def brute_force_by_ip(threshold=3):
     ]
 
     return list(events_collection.aggregate(pipeline))
+
+
+# Attack burst detection (failed login spike kroz vreme)
+def attack_burst_detection(threshold=5):
+    start, end = get_time_range()
+
+    pipeline = [
+        {
+            "$match": {
+                "timestamp": {"$gte": start, "$lte": end},
+                "type": "failed_login"
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "$dateTrunc": {
+                        "date": "$timestamp",
+                        "unit": "minute",
+                        "binSize": 5
+                    }
+                },
+                "count": {"$sum": 1}
+            }
+        },
+        {
+            "$match": {
+                "count": {"$gte": threshold}
+            }
+        },
+        {
+            "$sort": {
+                "_id": 1
+            }
+        }
+    ]
+
+    return list(events_collection.aggregate(pipeline))
+
+
+# Trend aktivnosti kroz vreme
+def events_trend():
+    start, end = get_time_range()
+
+    pipeline = [
+        {
+            "$match": {
+                "timestamp": {"$gte": start, "$lte": end}
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "$dateTrunc": {
+                        "date": "$timestamp",
+                        "unit": "minute",
+                        "binSize": 5
+                    }
+                },
+                "count": {"$sum": 1}
+            }
+        },
+        {
+            "$sort": {
+                "_id": 1
+            }
+        }
+    ]
+
+    return list(events_collection.aggregate(pipeline))

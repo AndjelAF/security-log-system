@@ -37,3 +37,17 @@ for _ in range(6):   # više od threshold (3)
 
 
 print(f"{num_logs} normalnih logova + brute force događaji ubačeni u kolekciju.")
+
+# Simulacija attack burst događaja
+burst_ip = "192.168.200.100"
+
+for _ in range(10):   # namerno više failed logova u istom intervalu
+    log = {
+        "timestamp": datetime.now(timezone.utc),
+        "user": random.choice(users),
+        "type": "failed_login",
+        "success": False,
+        "ip": burst_ip
+    }
+
+    events_collection.insert_one(log)
