@@ -152,3 +152,72 @@ def events_trend():
     ]
 
     return list(events_collection.aggregate(pipeline))
+
+
+# Suspicious user activity score
+def suspicious_users():
+    start, end = get_time_range()
+
+    pipeline = [
+        {
+            "$match": {
+                "timestamp": {
+                    "$gte": start,
+                    "$lte": end
+                }
+            }
+        },
+        {
+            "$group": {
+                "_id": "$user",
+
+                "failed_logins": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$type", "failed_login"]},
+                            1,
+                            0
+                        ]
+                    }
+                },
+
+                "unique_ips": {
+                    "$addToSet": "$ip"
+                }
+            }
+        },
+        {
+            "$project": {
+                "failed_logins": 1,
+
+                "ip_count": {
+                    "$size": "$unique_ips"
+                },
+
+                "risk_score": {
+                    "$add": [
+                        {"$multiply": ["$failed_logins", 2]},
+                        {
+                            "$cond": [
+                                {
+                                    "$gte": [
+                                        {"$size": "$unique_ips"},
+                                        3
+                                    ]
+                                },
+                                3,
+                                0
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "$sort": {
+                "risk_score": -1
+            }
+        }
+    ]
+
+    return list(events_collection.aggregate(pipeline))

@@ -4,7 +4,8 @@ from mongo_analytics import (
     brute_force_by_user,
     brute_force_by_ip,
     attack_burst_detection,
-    events_trend
+    events_trend,
+    suspicious_users
 )
 
 app = Flask(__name__, template_folder="templates")
@@ -33,6 +34,9 @@ def api_burst_alerts():
 @app.route("/api/stats/trend")
 def api_trend():
     return jsonify(events_trend())
+@app.route("/api/risk/users")
+def api_risk_users():
+    return jsonify(suspicious_users())
 
 
 # Frontend ruta

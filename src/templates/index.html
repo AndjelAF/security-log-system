@@ -2,51 +2,173 @@
 <html>
 <head>
     <title>Security Log Dashboard</title>
+
     <style>
-        body { font-family: Arial; padding: 40px; }
-        table { border-collapse: collapse; margin-bottom: 30px; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        .alert { color: red; font-weight: bold; }
+
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f9;
+        padding: 40px;
+        color: #333;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 40px;
+        color: #222;
+    }
+
+    .section {
+        background: white;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-radius: 12px;
+        box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+        margin-top: 0;
+        color: #444;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th {
+        background-color: #2c3e50;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+        background-color: #f2f2f2;
+    }
+
+    .alert {
+        background-color: #ffe5e5;
+        color: #b30000;
+        padding: 12px;
+        border-left: 5px solid red;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .risk-high {
+        color: darkred;
+        font-weight: bold;
+    }
+
+    .risk-medium {
+        color: orange;
+        font-weight: bold;
+    }
+
+    .risk-low {
+        color: green;
+        font-weight: bold;
+    }
+
     </style>
+
 </head>
+
 <body>
 
 <h1>Security Monitoring Dashboard</h1>
 
-<h2>Događaji po tipu (poslednjih 24h)</h2>
-<table id="typesTable">
-    <tr>
-        <th>Tip</th>
-        <th>Broj</th>
-    </tr>
-</table>
 
-<h2>Brute Force - Username</h2>
-<div id="userAlerts"></div>
+<div class="section">
 
-<h2>Brute Force - IP</h2>
-<div id="ipAlerts"></div>
+    <h2>Događaji po tipu (poslednjih 24h)</h2>
 
-<h2>Attack Burst Detection</h2>
-<div id="burstAlerts"></div>
+    <table id="typesTable">
+        <tr>
+            <th>Tip</th>
+            <th>Broj</th>
+        </tr>
+    </table>
 
-<h2>Activity Trend</h2>
-<table id="trendTable">
-    <tr>
-        <th>Time Window</th>
-        <th>Events</th>
-    </tr>
-</table>
+</div>
+
+
+<div class="section">
+
+    <h2>Brute Force - Username</h2>
+
+    <div id="userAlerts"></div>
+
+</div>
+
+
+<div class="section">
+
+    <h2>Brute Force - IP</h2>
+
+    <div id="ipAlerts"></div>
+
+</div>
+
+
+<div class="section">
+
+    <h2>Attack Burst Detection</h2>
+
+    <div id="burstAlerts"></div>
+
+</div>
+
+
+<div class="section">
+
+    <h2>Activity Trend</h2>
+
+    <table id="trendTable">
+        <tr>
+            <th>Time Window</th>
+            <th>Events</th>
+        </tr>
+    </table>
+
+</div>
+
+
+<div class="section">
+
+    <h2>Suspicious User Risk Score</h2>
+
+    <table id="riskTable">
+        <tr>
+            <th>User</th>
+            <th>Failed Logins</th>
+            <th>Unique IPs</th>
+            <th>Risk Score</th>
+        </tr>
+    </table>
+
+</div>
+
 
 <script>
 
 async function loadTypes() {
+
     const response = await fetch("/api/stats/types");
     const data = await response.json();
 
     const table = document.getElementById("typesTable");
 
     data.forEach(item => {
+
         const row = table.insertRow();
 
         row.insertCell(0).innerText = item._id;
@@ -55,16 +177,20 @@ async function loadTypes() {
 }
 
 
+
 async function loadUserAlerts() {
+
     const response = await fetch("/api/alerts/users");
     const data = await response.json();
 
     const container = document.getElementById("userAlerts");
 
     data.forEach(alert => {
+
         const p = document.createElement("p");
 
         p.className = "alert";
+
         p.innerText =
             `ALERT: ${alert._id} ima ${alert.count} failed login pokušaja!`;
 
@@ -73,16 +199,20 @@ async function loadUserAlerts() {
 }
 
 
+
 async function loadIpAlerts() {
+
     const response = await fetch("/api/alerts/ip");
     const data = await response.json();
 
     const container = document.getElementById("ipAlerts");
 
     data.forEach(alert => {
+
         const p = document.createElement("p");
 
         p.className = "alert";
+
         p.innerText =
             `ALERT: IP ${alert._id} ima ${alert.count} failed login pokušaja!`;
 
@@ -91,16 +221,20 @@ async function loadIpAlerts() {
 }
 
 
+
 async function loadBurstAlerts() {
+
     const response = await fetch("/api/alerts/burst");
     const data = await response.json();
 
     const container = document.getElementById("burstAlerts");
 
     data.forEach(alert => {
+
         const p = document.createElement("p");
 
         p.className = "alert";
+
         p.innerText =
             `ATTACK BURST: ${alert.count} failed login pokušaja detektovano u kratkom vremenskom intervalu!`;
 
@@ -109,13 +243,16 @@ async function loadBurstAlerts() {
 }
 
 
+
 async function loadTrend() {
+
     const response = await fetch("/api/stats/trend");
     const data = await response.json();
 
     const table = document.getElementById("trendTable");
 
     data.forEach(item => {
+
         const row = table.insertRow();
 
         row.insertCell(0).innerText =
@@ -127,11 +264,51 @@ async function loadTrend() {
 }
 
 
+
+async function loadRiskUsers() {
+
+    const response = await fetch("/api/risk/users");
+    const data = await response.json();
+
+    const table = document.getElementById("riskTable");
+
+    data.forEach(user => {
+
+        const row = table.insertRow();
+
+        row.insertCell(0).innerText = user._id;
+
+        row.insertCell(1).innerText =
+            user.failed_logins;
+
+        row.insertCell(2).innerText =
+            user.ip_count;
+
+        const scoreCell = row.insertCell(3);
+
+        scoreCell.innerText =
+            user.risk_score;
+
+        if (user.risk_score >= 10) {
+            scoreCell.className = "risk-high";
+        }
+        else if (user.risk_score >= 5) {
+            scoreCell.className = "risk-medium";
+        }
+        else {
+            scoreCell.className = "risk-low";
+        }
+    });
+}
+
+
+
 loadTypes();
 loadUserAlerts();
 loadIpAlerts();
 loadBurstAlerts();
 loadTrend();
+loadRiskUsers();
 
 </script>
 
